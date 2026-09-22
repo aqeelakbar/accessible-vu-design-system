@@ -20,7 +20,7 @@ npm ci
 npm run storybook
 ```
 
-Run the test with `npm test -- --run`. The repository is set up around Storybook rather than a standalone Vite app; there is no `index.html` entry point for `npm run dev` or `npm run build`.
+The repository is set up around Storybook rather than a standalone Vite app; there is no `index.html` entry point for `npm run dev` or `npm run build`. The Button test needs `jsdom` added to the development dependencies before it runs from a clean checkout. The repository also currently contains committed `node_modules` files; these should be removed from version control without deleting the source or lockfile.
 
 ## Design decisions
 
