@@ -1,7 +1,7 @@
 import { render } from '@testing-library/vue'
 import { describe, it, expect } from 'vitest'
 import { axe, toHaveNoViolations } from 'jest-axe'
-import Button from '../src/components/Button.vue'
+import Button from '../src/components/Button/index.vue'
 
 expect.extend(toHaveNoViolations)
 
