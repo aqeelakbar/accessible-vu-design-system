@@ -1,0 +1,47 @@
+name: One-time AccessibleVue cleanup
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Remove tracked dependencies, repair setup, and verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm -r --cached -q node_modules
+          rm -rf node_modules
+          printf 'node_modules/\ndist/\nstorybook-static/\ncoverage/\n' > .gitignore
+          npm install --save-dev 'jsdom@^26.1.0' --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm ci --no-audit --no-fund
+          npm test -- --run
+          npm run build-storybook
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('README.md')
+          old = "The Button test needs `jsdom` added to the development dependencies before it runs from a clean checkout. The repository also currently contains committed `node_modules` files; these should be removed from version control without deleting the source or lockfile."
+          new = "Run the Button test with `npm test -- --run`. Dependencies are installed with `npm ci`; the repository ignores generated `node_modules` files."
+          content = p.read_text()
+          assert old in content
+          p.write_text(content.replace(old, new))
+          p = Path('src/styles/tokens.scss')
+          content = p.read_text()
+          duplicate = '  --color-primary: #2a7ade;\n  --color-primary: #2a7ade;\n'
+          assert duplicate in content
+          p.write_text(content.replace(duplicate, '  --color-primary: #2a7ade;\n', 1))
+          PY
+          git rm .github/workflows/profile-cleanup.yml
+          git add -A
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Remove tracked dependencies and fix clean setup'
+          git push origin HEAD:main
